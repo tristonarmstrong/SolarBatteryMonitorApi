@@ -1,0 +1,11 @@
+[package]
+name = "battery-monitor-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.3.1"
+serde = "1.0.171"
+shuttle-actix-web = "0.21.0"
+shuttle-runtime = "0.21.0"
+tokio = "1.26.0"
