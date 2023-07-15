@@ -1,6 +1,18 @@
-use actix_web::{get, post, web::ServiceConfig, HttpResponse, Responder};
+use std::sync::Mutex;
+
+use actix_web::{
+    get, post,
+    web::{self, Data, ServiceConfig},
+    HttpResponse, Responder,
+};
 use serde::{Deserialize, Serialize};
 use shuttle_actix_web::ShuttleActixWeb;
+use shuttle_persist::PersistInstance;
+
+#[derive(Clone)]
+struct AppState {
+    persist: PersistInstance,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Battery {
@@ -39,19 +51,24 @@ async fn batteries() -> impl Responder {
 }
 
 #[post("/update_battery")]
-async fn update_battery() -> impl Responder {
+async fn update_battery(data: web::Json<Battery>, state: web::Data<AppState>) -> impl Responder {
     // if battery doesnt exist, create one
     // update battery
     // return new battery details
+    println!("{}", format!("{:?}", data));
     HttpResponse::Ok()
 }
 
 #[shuttle_runtime::main]
-async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+async fn actix_web(
+    #[shuttle_persist::Persist] persist: PersistInstance,
+) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+    let state = AppState { persist };
     let config = move |cfg: &mut ServiceConfig| {
         cfg.service(hello_world)
             .service(batteries)
-            .service(update_battery);
+            .service(update_battery)
+            .app_data(state);
     };
 
     Ok(config.into())
